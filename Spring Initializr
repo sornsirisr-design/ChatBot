@@ -1,0 +1,74 @@
+package com.chatbot;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+@SpringBootApplication
+public class ChatbotApplication {
+    public static void main(String[] args) {
+        SpringApplication.run(ChatbotApplication.class, args);
+    }
+}
+
+
+
+package com.chatbot.controller;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.messaging.handler.annotation.MessageMapping;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.stereotype.Controller;
+
+@Controller
+public class ChatController {
+
+    @Autowired
+    private SimpMessagingTemplate messagingTemplate;
+
+    @MessageMapping("/sendMessage")
+    public void sendMessage(String message) {
+        // ส่งข้อความไปยังผู้ใช้
+        messagingTemplate.convertAndSend("/topic/messages", getBotResponse(message));
+    }
+
+    // ฟังก์ชันนี้ใช้ตอบกลับข้อความจากแชตบอท
+    private String getBotResponse(String userMessage) {
+        if (userMessage.contains("สุขภาพจิต")) {
+            return "ฉันเข้าใจว่าคุณอาจรู้สึกเครียดหรือวิตกกังวล หากต้องการพูดคุยเกี่ยวกับเรื่องนี้ ฉันยินดีที่จะช่วย.";
+        } else if (userMessage.contains("ขอบคุณ")) {
+            return "ยินดีมากครับ/ค่ะ ฉันพร้อมให้คำปรึกษาคุณเสมอ";
+        } else {
+            return "ขอโทษค่ะ ฉันไม่เข้าใจข้อความของคุณ ลองพิมพ์คำอื่นดูนะคะ";
+        }
+    }
+}
+
+
+
+package com.chatbot.config;
+
+import org.springframework.context.annotation.Configuration;
+import org.springframework.messaging.simp.config.MessageBrokerRegistry;
+import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker;
+import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
+import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
+
+@Configuration
+@EnableWebSocketMessageBroker
+public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
+
+    @Override
+    public void configureMessageBroker(MessageBrokerRegistry config) {
+        config.enableSimpleBroker("/topic");
+        config.setApplicationDestinationPrefixes("/app");
+    }
+
+    @Override
+    public void registerStompEndpoints(StompEndpointRegistry registry) {
+        registry.addEndpoint("/ws").withSockJS();
+    }
+}
+
+
+mvn spring-boot:run
+
